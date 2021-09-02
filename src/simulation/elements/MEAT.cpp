@@ -32,7 +32,9 @@ void Element::Element_MEAT()
 	DefaultProperties.bio.health = 100;
 	DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	DefaultProperties.tmp = 100; // max health
-	DefaultProperties.tmp2 = 0; // Radiation damage
+	DefaultProperties.tmp2 = 0; // Radiation damage (not used)
+	DefaultProperties.bio.energy = 20; //should stop meat from dying immediately
+	DefaultProperties.bio.glucose = 5;
 	HeatConduct = 29;
 	Description = "Meat. Basic biological material.";
 
@@ -66,6 +68,13 @@ static int update(UPDATE_FUNC_ARGS)
 		if (parts[i].bio.o2 > 0){
         	parts[i].bio.o2 -= 1;
             parts[i].bio.co2 += 1;
+			if (parts[i].bio.glucose > 0){
+				parts[i].bio.glucose -= 1;
+				parts[i].bio.energy += 16;
+			}
+			else
+			{
+				parts[i].bio.energy += 5;
 		}
     }
 
@@ -80,13 +89,19 @@ static int update(UPDATE_FUNC_ARGS)
 					int ir = ID(r);
 
 					if (parts[i].bio.o2 > parts[ir].bio.o2){
+						parts[i].bio.energy--;
 						parts[i].bio.o2--;
 						parts[ir].bio.o2++;
 					}
 					if (parts[i].bio.co2 > parts[ir].bio.co2){
 						parts[i].bio.co2--;
+						parts[i].bio.energy--;
 						parts[ir].bio.co2++;
 					}
+					if (parts[i].bio.glucose > parts[ir].bio.glucose){
+						parts[i].bio.energy--;
+						parts[i].bio.glucose--;
+						parts[ir].bio.glucose++;
 				}
 			}
         }
@@ -107,12 +122,13 @@ static int update(UPDATE_FUNC_ARGS)
 		else{
 			if (parts[i].bio.health < parts[i].tmp){
 				parts[i].bio.health++;
+				parts[i].bio.energy--;
 			}
 		}
 	}
 
 	// Death check
-	if (parts[i].bio.health < 1){
+	if (parts[i].bio.health < 1 || parts[i].bio.energy < 0){
 		sim->part_change_type(i, x, y, PT_DT);
 	}
 
