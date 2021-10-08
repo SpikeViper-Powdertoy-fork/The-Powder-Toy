@@ -1,4 +1,4 @@
-/*
+
 
 #include "simulation/ElementCommon.h"
 
@@ -80,6 +80,11 @@ static int update(UPDATE_FUNC_ARGS)
 				parts[i].bio.o2 += 5;
 				sim->part_change_type(ID(r), x, y, PT_NONE);
 			}
+			
+			if (t == PT_NONE && parts[i].bio.o2 > 3 && RNG::Ref().chance(1, 30))
+			{
+				sim->create_part(-1, rx, ry, PT_BACT);
+			}
 			// Diffusion into surrounding blood
 			/*
 			else if (t == PT_BLD){
@@ -92,9 +97,9 @@ static int update(UPDATE_FUNC_ARGS)
 					parts[ir].bio.co2++;
 				}
 			}
-			*\
+			*/
 			// Transfer to biological tissues
-			
+			/*
 			else if (sim->elements[t].Properties & TYPE_BIO){
 				// Give oxygen
 				if (t != PT_LUNG && parts[i].bio.o2 > 0 && parts[ir].bio.o2 < MAX_O2){
@@ -114,6 +119,7 @@ static int update(UPDATE_FUNC_ARGS)
 					}
 				}
 			}
+			*/
 		}
 	}
 
@@ -142,6 +148,8 @@ static int update(UPDATE_FUNC_ARGS)
 	if (parts[i].bio.health < 1){
 		sim->part_change_type(i, x, y, PT_DT);
 	}
+	
+	
 
 
 	return 0;
@@ -175,11 +183,16 @@ int evaluateGenes(int gene, int genome)
 		geneValue = genome % 256;
 		return geneValue;
 	}
+	//There are only 2 genes
+	else
+	{
+		shiftedGenome = genome >> 8;
+		geneValue = shiftedGenome % 256;
+		return geneValue
+	}
 }
 
-int modifyGenes(int gene, int newValue, int genome)
-{
+//int modifyGenes(int gene, int newValue, int genome)
+//{
 	
-}
-
-*/
+//}
