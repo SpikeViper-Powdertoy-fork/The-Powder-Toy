@@ -35,7 +35,7 @@ void Element::Element_BACT()
 	HeatConduct = 29;
 	Description = "Bacteria. Infects living things (genes stored in tmp) (WIP).";
 
-	Properties = TYPE_LIQUID|PROP_NEUTPENETRATE|TYPE_BIO;
+	Properties = TYPE_LIQUID|PROP_NEUTPENETRATE; // Not bio to stop it from eating itself
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -52,19 +52,22 @@ void Element::Element_BACT()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	int geneOne = evaluateGenes(1, parts[i].tmp); // Regulates O2 usage and metabolism. More O2 usage means more energy
+	int geneTwo = evaluateGenes(2, parts[i].tmp); // Allows for more damage to be done, but at the cost of more energy
 	int r, rx, ry;
 
     rx =  RNG::Ref().between(-2, 2);
     ry =  RNG::Ref().between(-2, 2);
 
     // O2 use by blood itself (made very slow for somewhat accuracy)
-    if (RNG::Ref().chance(1, 1000)){
+    if (RNG::Ref().chance(geneOne, 1000)){
 
 		if (parts[i].bio.o2 > 0){
-        	parts[i].bio.o2 -= 1;
+        		parts[i].bio.o2 -= 1;
 			parts[i].bio.co2 += 1;
 		}
     }
+	int energyBank = geneOne;
 
     
     if (BOUNDS_CHECK && (rx || ry))
@@ -81,9 +84,19 @@ static int update(UPDATE_FUNC_ARGS)
 				sim->part_change_type(ID(r), x, y, PT_NONE);
 			}
 			
-			if (t == PT_NONE && parts[i].bio.o2 > 3 && RNG::Ref().chance(1, 30))
+			if (t == PT_NONE && parts[i].bio.o2 > 3 && RNG::Ref().chance(1, 30) && energyBank > 0)
 			{
 				sim->create_part(-1, rx, ry, PT_BACT);
+				energyBank--;
+			}
+			//eat
+			if (parts[ir].Properties & TYPE_BIO){
+				// Adapted from immune system code
+				if (RNG::Ref().chance(parts[i].bio.health, 1000)){
+					parts[ir].bio.health -= geneTwo;
+					parts[ir].bio.o2 -= geneTwo;
+					parts[i].bio.o2 += geneTwo;
+				}
 			}
 			// Diffusion into surrounding blood
 			/*
@@ -132,14 +145,15 @@ static int update(UPDATE_FUNC_ARGS)
 			parts[i].bio.health -= damage;
 		}
 		// Damage check
-		if (parts[i].bio.co2 > MAX_CO2 || parts[i].bio.o2 < 1){
+		if (parts[i].bio.co2 > MAX_CO2 || parts[i].bio.o2 < 1 || energyBank < 1){
 			parts[i].bio.health--;
 		}
 		// Otherwise heal
 		else{
-			if (parts[i].bio.health < 500 && parts[i].bio.o2 > 1){
+			if (parts[i].bio.health < 500 && parts[i].bio.o2 > 1 && energyBank > 0){
 				parts[i].bio.health++;
 				parts[i].bio.o2--;
+				energyBank--;
 			}
 		}
 	}
@@ -188,7 +202,7 @@ int evaluateGenes(int gene, int genome)
 	{
 		shiftedGenome = genome >> 8;
 		geneValue = shiftedGenome % 256;
-		return geneValue
+		return geneValue;
 	}
 }
 
@@ -196,18 +210,18 @@ int modifyGenes(int gene, int newValue, int genome)
 {
 	if (gene == 1)
 	{
-		thisGene = genome % 256;
-		onlyOtherGene = genome - thisGene;
-		newGenome = onlyOtherGene + newValue;
-		return newGenome
+		int thisGene = genome % 256;
+		int onlyOtherGene = genome - thisGene;
+		int newGenome = onlyOtherGene + newValue;
+		return newGenome;
 	}
 	else
 	{
-		thisGeneShifted = genome >> 8;
-		thisGene = thisGeneShifted << 8;
-		newValueInPlace = newValue << 8;
-		onlyOtherGene = genome - thisGene;
-		newGenome = onlyOtherGene + newValueInPlace;
-		return newGenome // Help me
+		int thisGeneShifted = genome >> 8;
+		int thisGene = thisGeneShifted << 8;
+		int newValueInPlace = newValue << 8;
+		int onlyOtherGene = genome - thisGene;
+		int newGenome = onlyOtherGene + newValueInPlace;
+		return newGenome; // Help me
 	}
 }
