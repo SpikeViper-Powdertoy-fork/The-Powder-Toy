@@ -192,7 +192,22 @@ int evaluateGenes(int gene, int genome)
 	}
 }
 
-//int modifyGenes(int gene, int newValue, int genome)
-//{
-	
-//}
+int modifyGenes(int gene, int newValue, int genome)
+{
+	if (gene == 1)
+	{
+		thisGene = genome % 256;
+		onlyOtherGene = genome - thisGene;
+		newGenome = onlyOtherGene + newValue;
+		return newGenome
+	}
+	else
+	{
+		thisGeneShifted = genome >> 8;
+		thisGene = thisGeneShifted << 8;
+		newValueInPlace = newValue << 8;
+		onlyOtherGene = genome - thisGene;
+		newGenome = onlyOtherGene + newValueInPlace;
+		return newGenome // Help me
+	}
+}
