@@ -96,6 +96,7 @@ static int update(UPDATE_FUNC_ARGS)
 					parts[ir].bio.health -= geneTwo;
 					parts[ir].bio.o2 -= geneTwo;
 					parts[i].bio.o2 += geneTwo;
+					energyBank -= geneTwo;
 				}
 			}
 			// Diffusion into surrounding blood
